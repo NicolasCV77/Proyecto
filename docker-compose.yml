@@ -1,0 +1,36 @@
+services:
+
+  mongodb:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - paramosense
+
+  backend:
+    build: ./Backend/backend-paramosense
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/paramosense
+    depends_on:
+      - mongodb
+    networks:
+      - paramosense
+
+  frontend:
+    build: ./Frontend/paramosense-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - paramosense
+
+networks:
+  paramosense:
+    driver: bridge
+
+volumes:
+  mongodb_data:

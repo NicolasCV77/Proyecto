@@ -1,1 +1,24 @@
+# Credenciales y configuración local
 .env
+*.env.local
+
+# Dependencias Node.js
+node_modules/
+
+# Build de Angular
+dist/
+.angular/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
