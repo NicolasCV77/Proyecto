@@ -28,7 +28,8 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <h2 class="modal-title">
-            {{ pickerStep === 'list' ? 'Nodos Arduino conectados' : 'Selecciona el tipo de sensor' }}
+            <ng-container *ngIf="pickerMode === 'real'">{{ pickerStep === 'list' ? 'Nodos Arduino conectados' : 'Selecciona el tipo de sensor' }}</ng-container>
+            <ng-container *ngIf="pickerMode === 'sim'">Sensores simulados activos</ng-container>
           </h2>
         </div>
         <button class="btn-close-modal" (click)="closeNodePicker()">
@@ -38,23 +39,29 @@
 
       <!-- Paso 1: lista de nodos -->
       <ng-container *ngIf="pickerStep === 'list'">
-        <p class="node-picker-subtitle">Nodos que han enviado datos en las últimas 24 h. Selecciona uno para agregarlo.</p>
+        <p class="node-picker-subtitle">
+          <ng-container *ngIf="pickerMode === 'real'">Nodos Arduino que han enviado datos en las últimas 24 h. Selecciona uno para agregarlo.</ng-container>
+          <ng-container *ngIf="pickerMode === 'sim'">Sensores del simulador activos ahora. Selecciona uno para registrarlo en esta ubicación.</ng-container>
+        </p>
 
         <div *ngIf="nodesLoading" class="nodes-loading">
           <div class="nodes-loading-spinner"></div>
           Consultando backend...
         </div>
 
-        <div *ngIf="!nodesLoading && activeNodes.length === 0" class="nodes-empty">
+        <div *ngIf="!nodesLoading && filteredPickerNodes.length === 0" class="nodes-empty">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#94a3b8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92"/></svg>
-          <p>Sin nodos activos</p>
-          <span>Asegúrate de que el nodo Arduino esté enviando datos vía LoRa → MQTT y el backend esté corriendo.</span>
+          <p *ngIf="pickerMode === 'real'">Sin nodos Arduino activos</p>
+          <p *ngIf="pickerMode === 'sim'">Sin sensores simulados activos</p>
+          <span *ngIf="pickerMode === 'real'">Asegúrate de que el nodo Arduino esté enviando datos vía LoRa → MQTT y el backend esté corriendo.</span>
+          <span *ngIf="pickerMode === 'sim'">Abre el simulador (Sensores simulados/ejecutar.bat) e inicia al menos un sensor SIM_XX.</span>
         </div>
 
-        <div class="nodes-list" *ngIf="!nodesLoading && activeNodes.length > 0">
-          <div class="node-item" *ngFor="let node of activeNodes" (click)="addRealNode(node)">
+        <div class="nodes-list" *ngIf="!nodesLoading && filteredPickerNodes.length > 0">
+          <div class="node-item" *ngFor="let node of filteredPickerNodes"
+               (click)="pickerMode === 'sim' ? addSimNode(node) : addRealNode(node)">
             <div class="node-item-left">
-              <div class="node-dot"></div>
+              <div class="node-dot" [style.background]="pickerMode === 'sim' ? '#0d9488' : ''"></div>
               <div class="node-info">
                 <span class="node-id">{{ node.nodeId }}</span>
                 <span class="node-last">{{ lastSeenLabel(node.lastSeen) }} · {{ node.readings }} lecturas</span>
@@ -153,11 +160,11 @@
               Agregar nodo real
             </button>
             <div class="btn-group-test">
-              <button class="btn-action btn-action-ghost" (click)="addTestSensors()" [disabled]="testActionLoading" title="Inyectar sensores de prueba">
+              <button class="btn-action btn-action-ghost" (click)="openSimPicker()" title="Agregar sensor simulado activo">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Prueba
+                Agregar prueba
               </button>
-              <button class="btn-action btn-action-danger" (click)="removeTestSensors()" [disabled]="testActionLoading || !hasTestSensors" title="Eliminar sensores de prueba">
+              <button class="btn-action btn-action-danger" (click)="removeSimSensors()" [disabled]="!hasSimSensors" title="Eliminar sensores simulados">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
               </button>
             </div>
@@ -202,7 +209,8 @@
                   [class.row-real]="isRealSensor(sensor)">
                 <td>
                   <span class="sensor-kind-badge" *ngIf="isTestSensor(sensor)" title="Sensor de prueba">TEST</span>
-                  <span class="sensor-kind-badge real" *ngIf="isRealSensor(sensor)" title="Nodo Arduino real">REAL</span>
+                  <span class="sensor-kind-badge sim"  *ngIf="sensor.sensorId.startsWith('SIM_')" title="Sensor simulado">SIM</span>
+                  <span class="sensor-kind-badge real" *ngIf="isRealSensor(sensor) && !sensor.sensorId.startsWith('SIM_')" title="Nodo Arduino real">REAL</span>
                   <span class="sensor-types-display">{{ sensorTypesLabel(sensor) }}</span>
                 </td>
                 <td><input type="text" class="cell-input id-input" [(ngModel)]="sensor.sensorId"></td>

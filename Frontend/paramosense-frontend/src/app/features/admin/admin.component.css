@@ -909,6 +909,11 @@ td { padding: 4px 10px; }
   color: #15803d;
 }
 
+.sensor-kind-badge.sim {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
 /* ── Sensor types label ──────────────────────────────────────── */
 .sensor-types-display {
   font-size: 11px;

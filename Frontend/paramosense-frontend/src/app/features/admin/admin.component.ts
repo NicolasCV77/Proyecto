@@ -61,6 +61,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   activeNodes: ActiveNode[]    = [];
   nodesLoading = false;
   showNodePicker = false;
+  pickerMode: 'real' | 'sim'  = 'real';
   pickerStep: 'list' | 'type' = 'list';
   selectedNode: ActiveNode | null = null;
   selectedNodeTypes: string[] = ['Temperatura'];
@@ -149,6 +150,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   // ── real sensor addition ────────────────────────────────────
 
   openNodePicker() {
+    this.pickerMode     = 'real';
     this.showNodePicker = true;
     this.nodesLoading   = true;
     this.cdr.detectChanges();
@@ -165,6 +167,68 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  openSimPicker() {
+    this.pickerMode     = 'sim';
+    this.pickerStep     = 'list';
+    this.showNodePicker = true;
+    this.nodesLoading   = true;
+    this.cdr.detectChanges();
+
+    this.http.get<ActiveNode[]>(`${this.API}/api/nodes/active`).subscribe({
+      next: (nodes) => {
+        this.activeNodes  = nodes;
+        this.nodesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.activeNodes  = [];
+        this.nodesLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  get filteredPickerNodes(): ActiveNode[] {
+    if (this.pickerMode === 'sim') return this.activeNodes.filter(n => n.nodeId.startsWith('SIM_'));
+    return this.activeNodes.filter(n => !n.nodeId.startsWith('SIM_'));
+  }
+
+  addSimNode(node: ActiveNode) {
+    if (!this.selectedLocation) return;
+    const allTypes = ['Temperatura', 'Humedad', 'Nivel de Agua', 'Humedad suelo'];
+    const existingIdx = this.selectedLocation.sensors.findIndex(s => s.sensorId === node.nodeId);
+    if (existingIdx >= 0) {
+      const existing = this.selectedLocation.sensors[existingIdx];
+      existing.types = allTypes;
+      existing.type  = allTypes[0];
+    } else {
+      this.selectedLocation.sensors.push({
+        sensorId:    node.nodeId,
+        types:       [...allTypes],
+        type:        allTypes[0],
+        lat:         this.selectedLocation.mapCenter.lat,
+        lng:         this.selectedLocation.mapCenter.lng,
+        status:      'Funcional',
+        statusClass: 'normal'
+      });
+    }
+    this.updateAdminMapMarkers();
+    this.closeNodePicker();
+  }
+
+  get hasSimSensors(): boolean {
+    return this.selectedLocation?.sensors.some(s => s.sensorId.startsWith('SIM_')) ?? false;
+  }
+
+  removeSimSensors() {
+    if (!this.selectedLocation) return;
+    this.selectedLocation.sensors = this.selectedLocation.sensors.filter(s => !s.sensorId.startsWith('SIM_'));
+    this.updateAdminMapMarkers();
+    this.testActionMsg   = 'Sensores simulados eliminados de la lista.';
+    this.testActionError = false;
+    this.cdr.detectChanges();
   }
 
   addRealNode(node: ActiveNode) {
@@ -312,7 +376,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   isTestSensor(s: Sensor): boolean { return s.sensorId.startsWith('TEST-'); }
-  isRealSensor(s: Sensor): boolean { return !s.sensorId.startsWith('TEST-') && !s.sensorId.startsWith('NUEVO-'); }
+  isSimSensor(s: Sensor):  boolean { return s.sensorId.startsWith('SIM_'); }
+  isRealSensor(s: Sensor): boolean { return !s.sensorId.startsWith('TEST-') && !s.sensorId.startsWith('NUEVO-') && !s.sensorId.startsWith('SIM_'); }
 
   saveLocation() {
     if (!this.selectedLocation) return;
