@@ -22,3 +22,14 @@ Thumbs.db
 .idea/
 *.suo
 *.user
+
+# Claude Code
+.claude/
+
+# Archivos innecesarios
+*.zip
+comprimido.zip
+GUIA_EJECUCION.md
+
+# Arduino — credenciales WiFi reales (usar config.h.example como plantilla)
+Arduino/Central/relay_central/config.h

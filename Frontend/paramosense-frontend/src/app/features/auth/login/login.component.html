@@ -1,0 +1,134 @@
+<div class="login-page">
+  <div class="login-left">
+    <div class="brand" style="text-decoration: none; color: inherit; cursor: pointer;" (click)="onLogoClick()">
+      <div class="brand-icon">
+        <img src="assets/images/logo-paramo.png" alt="Logo ParamoSense" />
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">PARAMO</span>
+        <span class="brand-sub">SENSE</span>
+      </div>
+    </div>
+
+    <div class="left-hero">
+      <div class="hero-img-container">
+        <div class="paramo-illustration">
+          <div class="mountain-bg"></div>
+          <div class="lake"></div>
+          <div class="sensor-dot s1"><span class="pulse"></span></div>
+          <div class="sensor-dot s2"><span class="pulse"></span></div>
+          <div class="sensor-dot s3"><span class="pulse"></span></div>
+        </div>
+      </div>
+
+      <h2 class="left-title">Monitoreo hídrico<br>del páramo</h2>
+      <p class="left-desc">Plataforma IoT de vigilancia continua para fuentes hídricas, alertas tempranas y toma de decisiones ambientales.</p>
+
+      <div class="feature-pills">
+        <div class="pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Datos en tiempo real
+        </div>
+        <div class="pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          Alertas tempranas
+        </div>
+        <div class="pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Seguimiento por región
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-card">
+      <div class="card-header">
+        <div class="card-hero-img">
+          <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Páramo" class="hero-photo" />
+          <div class="card-hero-overlay">
+            <div class="brand-mini">
+              <div class="brand-icon-mini">
+                <img src="assets/images/logo-paramo.png" alt="Mini Logo" width="20" height="20" style="object-fit: contain; filter: brightness(0) invert(1);" />
+              </div>
+              <span>PARAMO SENSE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-title-area">
+          <h1 class="card-title">Inicio de Sesión</h1>
+          <p class="card-subtitle">Accede a la plataforma de monitoreo ambiental</p>
+        </div>
+      </div>
+
+      <form class="login-form" (ngSubmit)="onLogin()">
+        <div class="field-group">
+          <label class="field-label" for="email">Correo electrónico</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+            <input
+              type="email"
+              id="email"
+              [(ngModel)]="email"
+              name="email"
+              class="input-field"
+              placeholder="Ingresa tu correo electrónico"
+              autocomplete="email"
+            />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="password">Contraseña</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              [(ngModel)]="password"
+              name="password"
+              class="input-field"
+              placeholder="Ingresa tu contraseña"
+              autocomplete="current-password"
+            />
+            <button type="button" class="eye-btn" (click)="togglePassword()">
+              <svg *ngIf="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg *ngIf="showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-meta">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="rememberMe" name="remember" class="checkbox" />
+            <span class="checkbox-custom"></span>
+            Recordarme
+          </label>
+          <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <div *ngIf="errorMessage" class="alert-message error" style="color: #dc2626; background-color: #fee2e2; border: 1px solid #f87171; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 15px; text-align: center;">
+          {{ errorMessage }}
+        </div>
+
+        <div *ngIf="successMessage" class="alert-message success" style="color: #15803d; background-color: #dcfce7; border: 1px solid #86efac; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 15px; text-align: center;">
+          {{ successMessage }}
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="isLoading">
+          {{ isLoading ? 'Verificando...' : 'Iniciar sesión' }}
+        </button>
+
+        <p class="register-link">
+          ¿No tienes una cuenta?
+          <a routerLink="/register" class="link-bold">Regístrate aquí</a>
+        </p>
+      </form>
+
+      <div class="card-footer">
+        Portal de acceso seguro • Sistema de monitoreo ambiental ParamoSense
+      </div>
+    </div>
+  </div>
+</div>

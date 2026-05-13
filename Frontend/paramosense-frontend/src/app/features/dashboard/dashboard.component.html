@@ -1,0 +1,527 @@
+<div class="dashboard-page">
+  <div *ngIf="isLoading" class="full-loading">
+    <div class="loading-spinner"></div>
+    <p>Cargando datos del servidor...</p>
+  </div>
+
+  <div *ngIf="error && !dashboardData" style="color:red;padding:40px;text-align:center">{{ error }}</div>
+
+  <ng-container *ngIf="dashboardData && !isLoading">
+    <app-navbar></app-navbar>
+
+    <div class="dashboard-body">
+
+      <!-- Header -->
+      <div class="page-header">
+        <div class="header-left">
+          <h1 class="page-title">Centro de monitoreo hídrico del páramo</h1>
+          <p class="page-subtitle">Seguimiento en tiempo real de sensores IoT desplegados en la zona.</p>
+        </div>
+        <div class="header-right">
+          <div class="date-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Fecha: <strong>{{ dashboardData.currentDate }}</strong></span>
+          </div>
+          <div *ngIf="mqttActive" class="mqtt-badge">
+            <span class="mqtt-dot"></span> MQTT Activo
+          </div>
+          <button class="btn-refresh" (click)="refresh()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Actualizar
+          </button>
+          <div class="location-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <strong>Ubicación:</strong> {{ dashboardData.locationName }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro de ubicación y sensor -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Ubicación
+          </label>
+          <select class="filter-select" [(ngModel)]="selectedLocationId" (change)="onLocationChange()">
+            <option value="all">Todas las ubicaciones</option>
+            <option *ngFor="let loc of allLocations" [value]="loc.locationId">{{ loc.locationName }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Sensor
+          </label>
+          <select class="filter-select" [(ngModel)]="selectedSensorId">
+            <option value="all">Todos los sensores</option>
+            <option *ngFor="let s of availableSensors" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+        <button class="btn-clear-filter" *ngIf="isFiltered" (click)="clearFilters()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Limpiar filtros
+        </button>
+        <span *ngIf="isFiltered" class="filter-active-badge">Filtro activo</span>
+      </div>
+
+      <!-- Sin datos (sin sensores conectados) -->
+      <div *ngIf="!hasAnyData" class="no-data-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Sin datos de sensores aún. El dashboard se actualizará automáticamente cuando el gateway LoRa envíe lecturas vía MQTT.
+      </div>
+
+      <!-- Sin resultados para el filtro activo -->
+      <div *ngIf="hasAnyData && !hasRealData" class="no-data-banner no-data-filter">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        No hay datos para los filtros seleccionados.
+        <button class="btn-clear-inline" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+
+      <!-- KPI row -->
+      <div class="kpi-row">
+
+        <!-- Sensores Activos -->
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Sensores Activos</span>
+            <div class="kpi-icon-wrapper green">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value" [class.kpi-no-data]="!hasRealData">
+            {{ hasRealData ? dashboardData.activeSensors : '—' }}
+          </div>
+          <div class="kpi-sub">Desplegados: {{ dashboardData.totalSensors }}</div>
+          <div class="kpi-mini-chart" *ngIf="hasRealData && dashboardData.sensorHistory.length">
+            <div *ngFor="let v of dashboardData.sensorHistory; let i = index" class="bar-col">
+              <div class="bar green" [style.height.px]="v * 2.5"></div>
+            </div>
+          </div>
+          <div *ngIf="!hasRealData" class="kpi-no-data-hint">Esperando datos del sensor</div>
+        </div>
+
+        <!-- Estado del Agua -->
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Estado del Agua</span>
+            <div class="kpi-icon-wrapper blue">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value status" [class]="waterStatus.cssClass" [class.kpi-no-data]="!hasRealData">
+            {{ hasRealData ? waterStatus.label : '—' }}
+          </div>
+          <div class="kpi-sub">
+            {{ hasRealData ? 'Nivel: ' + (filteredEnvSummary?.waterLevel ?? '—') + '%' : 'Sin lectura' }}
+          </div>
+          <div class="water-level-bar" *ngIf="hasRealData && filteredEnvSummary">
+            <div class="water-level-fill"
+                 [style.width.%]="filteredEnvSummary!.waterLevel"
+                 [class]="waterStatus.cssClass + '-fill'"></div>
+          </div>
+          <div class="water-categories">
+            <span class="wcat wcat-critical">Crítico &lt;40%</span>
+            <span class="wcat wcat-medium">Interm. 40–80%</span>
+            <span class="wcat wcat-optimal">Óptimo &gt;80%</span>
+          </div>
+        </div>
+
+        <!-- Alertas Críticas -->
+        <div class="kpi-card kpi-card-clickable" (click)="openAlertsPanel()" tabindex="0"
+             (keyup.enter)="openAlertsPanel()" title="Ver alertas">
+          <div class="kpi-header">
+            <span class="kpi-label">Alertas Críticas</span>
+            <div class="kpi-icon-wrapper red">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value alert-val">{{ criticalAlertsCount }}</div>
+          <div class="kpi-sub">{{ SAMPLE_ALERTS.length }} registradas · clic para ver</div>
+          <div class="kpi-open-hint">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            Ver lista completa
+          </div>
+        </div>
+
+        <!-- Clima Local -->
+        <div class="kpi-card kpi-card-clickable" (click)="openClimateModal()" tabindex="0"
+             (keyup.enter)="openClimateModal()" title="Ver categorías climáticas">
+          <div class="kpi-header">
+            <span class="kpi-label">Clima Local</span>
+            <div class="kpi-icon-wrapper teal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+            </div>
+          </div>
+          <ng-container *ngIf="filteredEnvSummary; else noEnvData">
+            <div class="kpi-value status" [class]="climateStatusClass">{{ climateStatus }}</div>
+            <div class="env-details">
+              <div class="env-item">
+                <span class="env-label">Temperatura</span>
+                <span class="env-val">{{ filteredEnvSummary!.temperature }} °C</span>
+              </div>
+              <div class="env-item">
+                <span class="env-label">Humedad aire</span>
+                <span class="env-val">{{ filteredEnvSummary!.humidity }} %</span>
+              </div>
+              <div class="env-item" *ngIf="filteredEnvSummary!.soil != null">
+                <span class="env-label">Humedad suelo</span>
+                <span class="env-val">{{ filteredEnvSummary!.soil }} %</span>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noEnvData>
+            <div class="kpi-value kpi-no-data">—</div>
+            <div class="kpi-no-data-hint">Sin lectura de sensores</div>
+          </ng-template>
+          <div class="kpi-open-hint">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            Ver categorías
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts row -->
+      <div class="charts-grid">
+
+        <!-- Nivel de agua -->
+        <div class="chart-card" [class.has-data]="hasRealData && derivedWaterHistory.length" (click)="openChart('water')">
+          <div class="chart-card-header">
+            <div class="chart-card-title">
+              <div class="chart-title-dot blue"></div>
+              Nivel de Agua
+            </div>
+            <div class="chart-current" *ngIf="hasRealData">
+              {{ filteredEnvSummary?.waterLevel ?? (derivedWaterHistory.length ? derivedWaterHistory[derivedWaterHistory.length-1] : '—') }} %
+            </div>
+            <button class="btn-expand" title="Ampliar gráfica" (click)="openChart('water'); $event.stopPropagation()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
+          </div>
+          <ng-container *ngIf="hasRealData && derivedWaterHistory.length; else noMiniChart">
+            <div class="mini-chart-wrap">
+              <div class="mini-y-axis">
+                <span *ngFor="let l of yLabels(derivedWaterHistory)">{{ l }}</span>
+              </div>
+              <div class="mini-chart-area">
+                <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="gradWater" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.25"/>
+                      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path [attr.d]="waterChartArea" fill="url(#gradWater)" stroke="none"/>
+                  <path [attr.d]="waterChartPath" fill="none" stroke="#2563eb" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+                </svg>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noMiniChart>
+            <div class="mini-empty">Sin datos históricos</div>
+          </ng-template>
+        </div>
+
+        <!-- Temperatura -->
+        <div class="chart-card" [class.has-data]="hasRealData && derivedTempHistory.length" (click)="openChart('temperature')">
+          <div class="chart-card-header">
+            <div class="chart-card-title">
+              <div class="chart-title-dot red"></div>
+              Temperatura
+            </div>
+            <div class="chart-current" *ngIf="hasRealData">
+              {{ filteredEnvSummary?.temperature ?? (derivedTempHistory.length ? derivedTempHistory[derivedTempHistory.length-1] : '—') }} °C
+            </div>
+            <button class="btn-expand" title="Ampliar gráfica" (click)="openChart('temperature'); $event.stopPropagation()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
+          </div>
+          <ng-container *ngIf="hasRealData && derivedTempHistory.length; else noMiniChart2">
+            <div class="mini-chart-wrap">
+              <div class="mini-y-axis">
+                <span *ngFor="let l of yLabels(derivedTempHistory)">{{ l }}</span>
+              </div>
+              <div class="mini-chart-area">
+                <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="gradTemp" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.25"/>
+                      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path [attr.d]="temperatureChartArea" fill="url(#gradTemp)" stroke="none"/>
+                  <path [attr.d]="temperatureChartPath" fill="none" stroke="#ef4444" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+                </svg>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noMiniChart2>
+            <div class="mini-empty">Sin datos históricos</div>
+          </ng-template>
+        </div>
+
+        <!-- Humedad -->
+        <div class="chart-card" [class.has-data]="hasRealData && derivedHumHistory.length" (click)="openChart('humidity')">
+          <div class="chart-card-header">
+            <div class="chart-card-title">
+              <div class="chart-title-dot teal"></div>
+              Humedad del Aire
+            </div>
+            <div class="chart-current" *ngIf="hasRealData">
+              {{ filteredEnvSummary?.humidity ?? (derivedHumHistory.length ? derivedHumHistory[derivedHumHistory.length-1] : '—') }} %
+            </div>
+            <button class="btn-expand" title="Ampliar gráfica" (click)="openChart('humidity'); $event.stopPropagation()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
+          </div>
+          <ng-container *ngIf="hasRealData && derivedHumHistory.length; else noMiniChart3">
+            <div class="mini-chart-wrap">
+              <div class="mini-y-axis">
+                <span *ngFor="let l of yLabels(derivedHumHistory)">{{ l }}</span>
+              </div>
+              <div class="mini-chart-area">
+                <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="gradHum" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#0d9488" stop-opacity="0.25"/>
+                      <stop offset="100%" stop-color="#0d9488" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path [attr.d]="humidityChartArea" fill="url(#gradHum)" stroke="none"/>
+                  <path [attr.d]="humidityChartPath" fill="none" stroke="#0d9488" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+                </svg>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noMiniChart3>
+            <div class="mini-empty">Sin datos históricos</div>
+          </ng-template>
+        </div>
+
+        <!-- Humedad suelo -->
+        <div class="chart-card" *ngIf="hasSoilData" [class.has-data]="true" (click)="openChart('soil')">
+          <div class="chart-card-header">
+            <div class="chart-card-title">
+              <div class="chart-title-dot yellow"></div>
+              Humedad del Suelo
+            </div>
+            <div class="chart-current" *ngIf="filteredEnvSummary?.soil != null">
+              {{ filteredEnvSummary!.soil }} %
+            </div>
+            <button class="btn-expand" title="Ampliar gráfica" (click)="openChart('soil'); $event.stopPropagation()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
+          </div>
+          <div class="mini-chart-wrap" *ngIf="derivedSoilHistory.length">
+            <div class="mini-y-axis">
+              <span *ngFor="let l of yLabels(derivedSoilHistory)">{{ l }}</span>
+            </div>
+            <div class="mini-chart-area">
+              <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="gradSoil" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#d97706" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="#d97706" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path [attr.d]="soilChartArea" fill="url(#gradSoil)" stroke="none"/>
+                <path [attr.d]="soilChartPath" fill="none" stroke="#d97706" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Readings table -->
+      <div class="table-card">
+        <h2 class="section-title">
+          Lecturas recientes
+          <span *ngIf="isFiltered" class="table-filter-hint">— filtradas</span>
+        </h2>
+        <ng-container *ngIf="hasRealData; else noReadingsData">
+          <div class="table-wrapper">
+            <table class="readings-table">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>ID Sensor</th>
+                  <th>Tipo</th>
+                  <th>Valor</th>
+                  <th>Unidad</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of filteredReadings">
+                  <td class="font-mono time-col">{{ r.timestamp }}</td>
+                  <td class="font-mono id-col">{{ r.sensorId }}</td>
+                  <td>{{ r.type }}</td>
+                  <td class="font-mono">{{ r.value }}</td>
+                  <td class="unit-col">{{ r.unit }}</td>
+                  <td><span class="status-badge" [class]="r.statusClass">{{ r.status }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+        <ng-template #noReadingsData>
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#94a3b8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            <p>Sin lecturas disponibles</p>
+            <span>Las lecturas aparecerán cuando el gateway MQTT transmita datos</span>
+          </div>
+        </ng-template>
+      </div>
+
+    </div><!-- /dashboard-body -->
+  </ng-container>
+
+  <!-- ── Expanded chart modal ─────────────────────────────── -->
+  <div class="chart-overlay" *ngIf="expandedChart" (click)="closeChart()">
+    <div class="chart-modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <h2 class="modal-title">{{ expandedChartTitle() }}</h2>
+          <span class="modal-unit">{{ expandedChartUnit() }}</span>
+        </div>
+        <button class="btn-close" (click)="closeChart()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="time-range-row">
+        <div class="range-group">
+          <button class="range-btn" [class.active]="timeRange === '1h'"  (click)="setTimeRange('1h')">1h</button>
+          <button class="range-btn" [class.active]="timeRange === '6h'"  (click)="setTimeRange('6h')">6h</button>
+          <button class="range-btn" [class.active]="timeRange === '24h'" (click)="setTimeRange('24h')">24h</button>
+          <button class="range-btn" [class.active]="timeRange === '7d'"  (click)="setTimeRange('7d')">7 días</button>
+          <button class="range-btn" [class.active]="timeRange === 'custom'" (click)="setTimeRange('custom')">Personalizado</button>
+        </div>
+        <div class="custom-range" *ngIf="timeRange === 'custom'">
+          <label>Desde <input type="date" [(ngModel)]="customFrom" class="date-input"></label>
+          <label>Hasta <input type="date" [(ngModel)]="customTo"   class="date-input"></label>
+        </div>
+      </div>
+
+      <div class="expanded-chart-area" *ngIf="expandedChartPoints.length; else noExpandedData">
+        <div class="exp-y-axis">
+          <span *ngFor="let l of expandedYLabels">{{ l }}</span>
+        </div>
+        <div class="exp-chart-wrap">
+          <svg class="exp-svg" viewBox="0 0 100 90" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="gradExp" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" [attr.stop-color]="expandedChartColor()" stop-opacity="0.3"/>
+                <stop offset="100%" [attr.stop-color]="expandedChartColor()" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path [attr.d]="expandedChartArea" fill="url(#gradExp)" stroke="none"/>
+            <path [attr.d]="expandedChartPath" fill="none" [attr.stroke]="expandedChartColor()" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+          </svg>
+          <div class="exp-x-labels">
+            <span *ngFor="let lbl of expandedXLabels">{{ lbl }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #noExpandedData>
+        <div class="empty-state" style="padding: 60px 24px">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#94a3b8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <p>Sin datos en este rango de tiempo</p>
+          <span>Prueba con un rango más amplio o espera nuevas lecturas del sensor</span>
+        </div>
+      </ng-template>
+
+      <div class="modal-summary" *ngIf="expandedChartPoints.length">
+        <div class="summary-stat">
+          <span class="summary-label">Mínimo</span>
+          <span class="summary-val">{{ expandedChartPoints | minVal }} {{ expandedChartUnit() }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">Máximo</span>
+          <span class="summary-val">{{ expandedChartPoints | maxVal }} {{ expandedChartUnit() }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">Promedio</span>
+          <span class="summary-val">{{ expandedChartPoints | avgVal }} {{ expandedChartUnit() }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">Lecturas</span>
+          <span class="summary-val">{{ expandedChartPoints.length }}</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Alerts panel (slide-in from right) ──────────────── -->
+  <div class="side-overlay" [class.visible]="showAlertsPanel" (click)="closeAlertsPanel()">
+    <div class="side-panel" [class.visible]="showAlertsPanel" (click)="$event.stopPropagation()">
+      <div class="side-panel-header">
+        <div class="side-panel-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          Alertas del sistema
+        </div>
+        <button class="btn-close" (click)="closeAlertsPanel()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="side-panel-body">
+        <div class="alert-item" *ngFor="let a of SAMPLE_ALERTS">
+          <div class="alert-left">
+            <span class="alert-type-badge" [class]="alertBadgeClass(a.type)">
+              {{ a.type === 'critical' ? 'CRÍTICO' : a.type === 'warning' ? 'AVISO' : 'INFO' }}
+            </span>
+            <div class="alert-text">
+              <span class="alert-title">{{ a.title }}</span>
+              <span class="alert-desc">{{ a.desc }}</span>
+            </div>
+          </div>
+          <div class="alert-right">
+            <span class="alert-time">{{ a.time }}</span>
+            <span class="alert-loc">{{ a.location }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Climate modal (fade + scale) ────────────────────── -->
+  <div class="modal-overlay-fade" [class.visible]="showClimateModal" (click)="closeClimateModal()">
+    <div class="climate-modal" [class.visible]="showClimateModal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <h2 class="modal-title">Categorías de Clima Local</h2>
+        </div>
+        <button class="btn-close" (click)="closeClimateModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <p class="climate-modal-subtitle">
+        Clasificación del estado climático del páramo basada en parámetros ambientales críticos para ecosistemas de alta montaña.
+      </p>
+      <div class="climate-cats">
+        <div class="climate-cat" *ngFor="let cat of CLIMATE_CATEGORIES" [class]="'climate-cat-' + cat.cssClass">
+          <div class="climate-cat-header">
+            <div class="climate-cat-dot" [class]="cat.cssClass + '-dot'"></div>
+            <span class="climate-cat-name">{{ cat.name }}</span>
+          </div>
+          <p class="climate-cat-desc">{{ cat.desc }}</p>
+          <div class="climate-cat-params">
+            <div class="cparam"><span class="cparam-label">Temperatura</span><span class="cparam-val">{{ cat.tempRange }}</span></div>
+            <div class="cparam"><span class="cparam-label">Humedad aire</span><span class="cparam-val">{{ cat.humRange }}</span></div>
+            <div class="cparam"><span class="cparam-label">Nivel agua</span><span class="cparam-val">{{ cat.waterRange }}</span></div>
+            <div class="cparam"><span class="cparam-label">Humedad suelo</span><span class="cparam-val">{{ cat.soilRange }}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="climate-modal-current" *ngIf="filteredEnvSummary">
+        <span class="climate-current-label">Estado actual:</span>
+        <span class="climate-current-val" [class]="climateStatusClass">{{ climateStatus }}</span>
+      </div>
+    </div>
+  </div>
+
+</div>

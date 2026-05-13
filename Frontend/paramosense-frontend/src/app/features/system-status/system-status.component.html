@@ -1,0 +1,57 @@
+<div class="system-page">
+  <app-navbar></app-navbar>
+
+  <div class="system-body">
+    <div class="page-header">
+      <h1 class="page-title">Soporte Técnico</h1>
+      <p class="page-subtitle">¿Detectaste un problema con los sensores o el sistema? Contacta a nuestro equipo.</p>
+    </div>
+
+    <div class="support-container">
+      <div class="support-card">
+        <div class="support-icon-wrap">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <div class="support-body">
+          <h2 class="support-title">Atención y Soporte Técnico</h2>
+          <p class="support-desc">
+            ¿Detectaste fallos en las lecturas, sensores desconectados o errores en el mapa?<br>
+            Informa a nuestro equipo de soporte técnico para recibir asistencia inmediata.
+          </p>
+          <div class="support-actions">
+            <a href="mailto:paramosense@gmail.com" class="btn-support">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Reportar problema por correo
+            </a>
+            <span class="support-email">paramosense&#64;gmail.com</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-card">
+        <h3 class="faq-title">Preguntas frecuentes</h3>
+        <div class="faq-list">
+          <div class="faq-item">
+            <span class="faq-q">¿Por qué no veo datos en el dashboard?</span>
+            <span class="faq-a">Verifica que el nodo Arduino esté encendido y conectado vía LoRa al concentrador. El concentrador debe tener WiFi activo y publicar en el broker MQTT.</span>
+          </div>
+          <div class="faq-item">
+            <span class="faq-q">¿Con qué frecuencia se actualizan los datos?</span>
+            <span class="faq-a">Los sensores envían lecturas cada 30 segundos. El dashboard se refresca automáticamente.</span>
+          </div>
+          <div class="faq-item">
+            <span class="faq-q">¿Cómo agrego un nuevo sensor al mapa?</span>
+            <span class="faq-a">Accede al Panel de Administrador con la contraseña de operador y usa "Agregar nodo real" para vincular un nodo Arduino activo.</span>
+          </div>
+          <div class="faq-item">
+            <span class="faq-q">¿Qué significa el estado "Crítico" en una alerta?</span>
+            <span class="faq-a">El sensor registró un valor fuera del rango seguro para el ecosistema paramuno (temperatura &gt;20 °C, humedad &lt;40% o nivel de agua &lt;40%).</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

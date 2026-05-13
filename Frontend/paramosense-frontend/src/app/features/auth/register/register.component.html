@@ -1,0 +1,234 @@
+<div class="register-page">
+  <div class="register-left">
+    <a routerLink="/" class="brand" style="text-decoration: none; color: inherit; cursor: pointer;">
+      <div class="brand-icon">
+        <img src="assets/images/logo-paramo.png" alt="Logo ParamoSense"/>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">PARAMO</span>
+        <span class="brand-sub">SENSE</span>
+      </div>
+    </a>
+    <div class="left-content">
+      <div class="hero-visual">
+        <div class="water-rings">
+          <div class="ring r1"></div>
+          <div class="ring r2"></div>
+          <div class="ring r3"></div>
+          <div class="ring-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+              <path d="M7 12s1-3 5-3 5 3 5 3-1 3-5 3-5-3-5-3z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="left-title">Únete al monitoreo<br>del páramo</h2>
+      <p class="left-desc">Crea una cuenta para recibir lecturas en tiempo real, alertas ambientales y reportes
+        confiables de la red de sensores.</p>
+
+      <div class="benefit-list">
+        <div class="benefit">
+          <div class="benefit-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <span>Monitoreo continuo de fuentes hídricas y variables ambientales.</span>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+          </div>
+          <span>Alertas tempranas para comunidades, autoridades y equipos técnicos.</span>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <span>Seguimiento por región, municipio y sector de páramo.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="register-right">
+    <div class="register-card">
+      <div class="card-top">
+        <div class="card-top-content">
+          <h1 class="card-title">Registro de usuario</h1>
+          <a routerLink="/login" class="already-link">Ya tengo cuenta</a>
+        </div>
+      </div>
+
+      <form class="register-form" (ngSubmit)="onRegister()">
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label">Nombre <span class="field-required">*</span></label>
+            <div class="input-wrapper">
+              <input type="text" [(ngModel)]="formData.nombre" name="nombre"
+                     class="input-field" [class.field-error]="fieldHasError('nombre')"
+                     placeholder="Ingresa tu nombre" (blur)="capitalizeName('nombre')"/>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Apellido</label>
+            <div class="input-wrapper">
+              <input type="text" [(ngModel)]="formData.apellido" name="apellido" class="input-field"
+                     placeholder="Ingresa tu apellido" (blur)="capitalizeName('apellido')"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group" style="width: 100%;">
+            <label class="field-label">Correo electrónico</label>
+            <div class="input-wrapper">
+              <input type="email" [(ngModel)]="formData.email" name="email"
+                     class="input-field" [class.field-error]="fieldHasError('email')"
+                     placeholder="Ingresa tu correo electrónico"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label">Contraseña <span class="field-required">*</span></label>
+            <div class="input-wrapper">
+              <input [type]="showPass ? 'text' : 'password'" [(ngModel)]="formData.password" name="password"
+                     class="input-field" [class.field-error]="fieldHasError('password')"
+                     placeholder="Mínimo 8 caracteres"/>
+              <button type="button" class="eye-btn" (click)="showPass = !showPass">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="strength-wrap" *ngIf="formData.password">
+              <div class="strength-segments">
+                <div class="seg" [class.active]="passwordStrength >= 1" [class]="passwordStrength >= 1 ? strengthClass : ''"></div>
+                <div class="seg" [class.active]="passwordStrength >= 2" [class]="passwordStrength >= 2 ? strengthClass : ''"></div>
+                <div class="seg" [class.active]="passwordStrength >= 3" [class]="passwordStrength >= 3 ? strengthClass : ''"></div>
+                <div class="seg" [class.active]="passwordStrength >= 4" [class]="passwordStrength >= 4 ? strengthClass : ''"></div>
+              </div>
+              <span class="strength-text" [class]="strengthClass">{{ strengthLabel }}</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Confirmar contraseña</label>
+            <div class="input-wrapper">
+              <input [type]="showPass2 ? 'text' : 'password'" [(ngModel)]="formData.confirmPassword"
+                     name="confirmPassword" class="input-field"
+                     [class.field-error]="fieldHasError('confirmPassword')"
+                     placeholder="Confirma tu contraseña"/>
+              <button type="button" class="eye-btn" (click)="showPass2 = !showPass2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label">Rol</label>
+            <div class="input-wrapper select-wrapper">
+              <select [(ngModel)]="formData.rol" name="rol" class="input-field select-field"
+                      [class.field-error]="fieldHasError('rol')">
+                <option value="" disabled selected>Selecciona tu rol</option>
+                <option value="agricultor">Agricultor</option>
+                <option value="autoridad">Autoridad Ambiental</option>
+                <option value="tecnico">Operador Técnico</option>
+                <option value="ingeniero">Ingeniero / Analista</option>
+                <option value="funcionario">Funcionario Ambiental</option>
+              </select>
+              <svg class="select-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Teléfono</label>
+            <div class="input-wrapper">
+              <input type="tel" [(ngModel)]="formData.telefono" name="telefono"
+                     class="input-field" [class.field-error]="fieldHasError('telefono')"
+                     placeholder="Ingresa tu número de teléfono"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label">Ubicación o área de interés</label>
+            <div class="input-wrapper select-wrapper">
+              <select [(ngModel)]="formData.area" name="area" class="input-field select-field">
+                <option value="" disabled selected>Seleccione el área</option>
+                <option value="chingaza">Páramo de Chingaza</option>
+                <option value="sumapaz">Páramo de Sumapaz</option>
+                <option value="guerrero">Páramo de Guerrero</option>
+                <option value="rabanal">Páramo de Rabanal</option>
+                <option value="cruz_verde">Cruz Verde - Choachí</option>
+              </select>
+              <svg class="select-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Municipio / Sector</label>
+            <div class="input-wrapper select-wrapper">
+              <select [(ngModel)]="formData.municipio" name="municipio" class="input-field select-field">
+                <option value="" disabled selected>Seleccione el lugar</option>
+                <option value="la_calera">La Calera</option>
+                <option value="choachi">Choachí</option>
+                <option value="ubaque">Ubaque</option>
+                <option value="fomeque">Fómeque</option>
+                <option value="guasca">Guasca</option>
+              </select>
+              <svg class="select-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <label class="checkbox-label terms">
+          <input type="checkbox" [(ngModel)]="acceptTerms" name="terms" class="checkbox"/>
+          <span class="checkbox-custom"></span>
+          <span class="terms-text">Acepto los <a href="#" class="terms-link">términos de uso</a> y la <a href="#"
+                                                                                                         class="terms-link">política de privacidad</a> para el tratamiento de datos y el envío de alertas.</span>
+        </label>
+
+        <div *ngIf="errorMessage" class="alert-message error"
+             style="color: #dc2626; background-color: #fee2e2; border: 1px solid #f87171; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 15px; text-align: center;">
+          {{ errorMessage }}
+        </div>
+
+        <div *ngIf="successMessage" class="alert-message success"
+             style="color: #15803d; background-color: #dcfce7; border: 1px solid #86efac; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 15px; text-align: center;">
+          {{ successMessage }}
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="!acceptTerms || stage !== 'idle'">
+          {{ stage === 'registering' ? 'Registrando...' : stage === 'logging-in' ? 'Iniciando sesión...' : 'Crear cuenta' }}
+        </button>
+      </form>
+
+      <div class="card-footer">
+        Portal de acceso seguro • Sistema de monitoreo ambiental ParamoSense
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,126 @@
+<div class="reports-page">
+  <app-navbar></app-navbar>
+
+  <div class="reports-body">
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">Centro de Reportes y Exportación</h1>
+        <p class="page-subtitle">Genera, filtra y descarga los datos históricos de los sensores en tiempo real.</p>
+      </div>
+      <div class="header-right">
+        <div class="date-badge">
+          <span>Fecha: <strong>{{ currentDate }}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-export-row">
+      <div class="export-card" (click)="quickDownload('Resumen PDF')">
+        <div class="export-icon pdf">PDF</div>
+        <div class="export-info">
+          <h3>Resumen Ejecutivo</h3>
+          <p>Informe general en PDF.</p>
+        </div>
+      </div>
+
+      <div class="export-card" (click)="quickDownload('Datos Excel')">
+        <div class="export-icon excel">XLSX</div>
+        <div class="export-info">
+          <h3>Toda la Base de Datos</h3>
+          <p>Exporta todas las lecturas disponibles a Excel.</p>
+        </div>
+      </div>
+
+      <div class="export-card" (click)="quickDownload('Log CSV')">
+        <div class="export-icon csv">CSV</div>
+        <div class="export-info">
+          <h3>Log de Alertas</h3>
+          <p>Exporta solo eventos críticos en formato CSV.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reports-grid">
+
+      <div class="report-card form-card">
+        <h2 class="section-title">Generar Reporte Personalizado</h2>
+
+        <div class="form-group">
+          <label>Rango de Fechas</label>
+          <div class="date-inputs">
+            <input type="date" class="custom-input" [(ngModel)]="startDate" />
+            <span>hasta</span>
+            <input type="date" class="custom-input" [(ngModel)]="endDate" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Sector de Monitoreo</label>
+          <select class="custom-input" [(ngModel)]="selectedSector">
+            <option *ngFor="let sector of availableSectors" [value]="sector">{{ sector }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Variable</label>
+          <select class="custom-input" [(ngModel)]="selectedType">
+            <option *ngFor="let type of availableTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Formato de exportación</label>
+          <div class="format-selector">
+            <button class="fmt-btn" [class.active]="exportFormat === 'excel'" (click)="exportFormat = 'excel'">
+              <span class="fmt-icon xlsx">XLSX</span> Excel
+            </button>
+            <button class="fmt-btn" [class.active]="exportFormat === 'pdf'" (click)="exportFormat = 'pdf'">
+              <span class="fmt-icon pdf">PDF</span> PDF
+            </button>
+            <button class="fmt-btn" [class.active]="exportFormat === 'csv'" (click)="exportFormat = 'csv'">
+              <span class="fmt-icon csv">CSV</span> CSV
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="filterError" class="filter-error-msg">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ filterError }}
+        </div>
+
+        <button class="btn-generate" (click)="generateCustomReport()" [disabled]="isGenerating">
+          <span *ngIf="!isGenerating">Filtrar y Descargar ({{ exportFormat.toUpperCase() }})</span>
+          <span *ngIf="isGenerating">Procesando...</span>
+        </button>
+      </div>
+
+      <div class="report-card history-card">
+        <h2 class="section-title">Reportes Generados en esta Sesión</h2>
+        <div class="table-wrapper">
+          <table class="reports-table">
+            <thead>
+            <tr>
+              <th>Documento</th>
+              <th>Fecha</th>
+              <th>Formato</th>
+              <th>Tamaño</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngIf="recentReports.length === 0">
+              <td colspan="4" class="empty-state">No se han generado reportes aún. Usa los filtros de la izquierda o los botones superiores.</td>
+            </tr>
+            <tr *ngFor="let rep of recentReports">
+              <td class="doc-name">{{ rep.name }}</td>
+              <td class="font-mono text-muted">{{ rep.date }}</td>
+              <td><span class="format-badge" [ngClass]="rep.type.toLowerCase()">{{ rep.type }}</span></td>
+              <td class="text-muted">{{ rep.size }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

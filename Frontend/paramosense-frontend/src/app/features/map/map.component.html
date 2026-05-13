@@ -1,0 +1,156 @@
+<div class="map-page">
+  <app-navbar></app-navbar>
+
+  <div class="map-body">
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">Mapa del sector seleccionado del páramo</h1>
+        <p class="page-subtitle">Haz clic en un sensor para ver sus detalles y lecturas recientes.</p>
+      </div>
+      <div class="header-right">
+        <div class="date-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Fecha: <strong>{{ currentDate }}</strong></span>
+        </div>
+        <button class="btn-refresh" (click)="refresh()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
+          Actualizar
+        </button>
+        <div class="location-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <strong>Ubicación:</strong> {{ locationName }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Location selector tabs -->
+    <div class="location-selector" *ngIf="allLocations.length">
+      <button class="loc-tab" [class.active]="selectedLocationId === 'user'"
+              (click)="selectLocation('user')">Mi ubicación</button>
+      <button class="loc-tab" [class.active]="selectedLocationId === 'all'"
+              (click)="selectLocation('all')">Todas</button>
+      <button class="loc-tab" *ngFor="let loc of allLocations"
+              [class.active]="selectedLocationId === loc.locationId"
+              (click)="selectLocation(loc.locationId)"
+              [title]="loc.locationName">
+        {{ loc.locationName | slice:0:22 }}{{ loc.locationName.length > 22 ? '…' : '' }}
+      </button>
+    </div>
+
+    <div class="map-content">
+
+      <!-- Map card -->
+      <div class="map-card">
+        <div class="map-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          Mapa interactivo — clic en marcador para detalles
+        </div>
+        <div class="map-wrapper">
+          <input type="text" class="map-search-bar" placeholder="Buscar sensor por ID o tipo..." [(ngModel)]="searchQuery" (input)="filterMarkers()" />
+          <div #mapContainer class="leaflet-container"></div>
+        </div>
+      </div>
+
+      <!-- Right column: legend + sensor panel -->
+      <div class="right-column">
+
+        <!-- Legend -->
+        <div class="legend-panel">
+          <h3 class="legend-title">Convenciones:</h3>
+          <div class="legend-items">
+            <div class="legend-item">
+              <div class="legend-icon-box green"><span class="sensor-icon-text">((·))</span></div>
+              <span class="legend-label">Sensor<br>funcional</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-icon-box red"><span class="sensor-icon-text">⚠</span></div>
+              <span class="legend-label">Sensor con<br>alerta crítica</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-icon-box yellow"><span class="sensor-icon-text">((·))</span></div>
+              <span class="legend-label">Planificado /<br>advertencia</span>
+            </div>
+          </div>
+          <div class="map-stats">
+            <div class="map-stat"><div class="stat-dot green"></div><span><strong>{{ functionalCount }}</strong> funcionales</span></div>
+            <div class="map-stat"><div class="stat-dot red"></div><span><strong>{{ criticalCount }}</strong> con alerta</span></div>
+            <div class="map-stat"><div class="stat-dot yellow"></div><span><strong>{{ plannedCount }}</strong> planificados</span></div>
+          </div>
+        </div>
+
+        <!-- Sensor detail panel (appears on click) -->
+        <div class="sensor-panel" [class.visible]="selectedSensor" *ngIf="selectedSensor">
+          <div class="sensor-panel-header">
+            <div class="sensor-panel-title">
+              <div class="sensor-status-dot" [style.background]="selectedSensor.color"></div>
+              <span>{{ selectedSensor.sensorId }}</span>
+            </div>
+            <button class="btn-close-panel" (click)="closeSensorPanel()" title="Cerrar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div class="sensor-panel-body">
+            <div class="sensor-meta">
+              <div class="meta-row">
+                <span class="meta-label">Tipo</span>
+                <span class="meta-val">{{ selectedSensor.type }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Estado</span>
+                <span class="sensor-badge" [class]="statusBadgeClass(selectedSensor.statusClass)">
+                  {{ selectedSensor.status }}
+                </span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Zona</span>
+                <span class="meta-val">{{ selectedSensor.locationName }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Coordenadas</span>
+                <span class="meta-val mono">{{ selectedSensor.lat.toFixed(5) }}, {{ selectedSensor.lng.toFixed(5) }}</span>
+              </div>
+            </div>
+
+            <!-- Recent readings -->
+            <div class="sensor-readings-section">
+              <h4 class="readings-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Lecturas recientes
+              </h4>
+
+              <div *ngIf="selectedSensor.readings.length; else noReadings" class="readings-list">
+                <div class="reading-row" *ngFor="let r of selectedSensor.readings.slice(0, 5)">
+                  <div class="reading-left">
+                    <span class="reading-time">{{ r.timestamp }}</span>
+                    <span class="reading-type">{{ r.type }}</span>
+                  </div>
+                  <div class="reading-right">
+                    <span class="reading-value">{{ r.value }}{{ r.unit }}</span>
+                    <span class="reading-badge" [class]="statusBadgeClass(r.statusClass)">{{ r.status }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noReadings>
+                <div class="no-readings">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#94a3b8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  <p>Sin lecturas MQTT aún</p>
+                  <span>Los datos aparecerán cuando el nodo transmita</span>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholder when no sensor selected -->
+        <div class="sensor-panel-hint" *ngIf="!selectedSensor">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#94a3b8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 13 8 13s8-7.75 8-13a8 8 0 0 0-8-8z"/></svg>
+          <p>Selecciona un sensor en el mapa</p>
+          <span>Verás aquí su estado, coordenadas y últimas lecturas.</span>
+        </div>
+
+      </div><!-- /right-column -->
+    </div>
+  </div>
+</div>
