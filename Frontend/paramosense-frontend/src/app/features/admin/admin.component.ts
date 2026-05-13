@@ -25,6 +25,16 @@ interface Location {
   sensors:      Sensor[];
 }
 
+interface UserRecord {
+  _id:       string;
+  name:      string;
+  email:     string;
+  rol?:      string;
+  telefono?: string;
+  area?:     string;
+  municipio?: string;
+}
+
 interface ActiveNode {
   nodeId:      string;
   lastSeen:    string;
@@ -48,6 +58,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   adminPassword     = '';
   passwordError     = '';
 
+  // ── tabs ───────────────────────────────────────────────────
+  activeTab: 'locations' | 'users' = 'locations';
+
   // ── data ───────────────────────────────────────────────────
   locations: Location[]       = [];
   selectedLocation: Location | null = null;
@@ -56,6 +69,11 @@ export class AdminComponent implements OnInit, OnDestroy {
   loadError  = '';
   saveMessage = '';
   saveError   = false;
+
+  // ── users tab ──────────────────────────────────────────────
+  users: UserRecord[]  = [];
+  usersLoading = false;
+  usersError   = '';
 
   // ── connected nodes (real Arduino) ────────────────────────
   activeNodes: ActiveNode[]    = [];
@@ -136,6 +154,53 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  switchTab(tab: 'locations' | 'users') {
+    this.activeTab = tab;
+    if (tab === 'users' && !this.usersLoading && (!this.users.length || this.usersError)) {
+      this.loadUsers();
+    }
+    this.cdr.detectChanges();
+  }
+
+  loadUsers() {
+    this.usersLoading = true;
+    this.usersError   = '';
+    this.http.get<UserRecord[]>(`${this.API}/api/admin/users`).subscribe({
+      next: (data) => {
+        this.users        = data;
+        this.usersLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.usersError   = 'No se pudo cargar la lista de usuarios.';
+        this.usersLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  rolLabel(rol: string | undefined): string {
+    const map: Record<string, string> = {
+      agricultor:  'Agricultor',
+      autoridad:   'Autoridad Ambiental',
+      tecnico:     'Operador Técnico',
+      ingeniero:   'Ingeniero / Analista',
+      funcionario: 'Funcionario Ambiental',
+    };
+    return rol ? (map[rol] || rol) : '—';
+  }
+
+  areaLabel(area: string | undefined): string {
+    const map: Record<string, string> = {
+      chingaza:    'Chingaza',
+      sumapaz:     'Sumapaz',
+      guerrero:    'Guerrero',
+      rabanal:     'Rabanal',
+      cruz_verde:  'Cruz Verde',
+    };
+    return area ? (map[area] || area) : '—';
   }
 
   selectLocation(loc: Location) {

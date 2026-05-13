@@ -142,6 +142,55 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
   ];
 
+  // ── chart hover ──────────────────────────────────────────
+  miniHover: { chart: ChartType | null; x: number; yPct: number; value: number; unit: string } =
+    { chart: null, x: 0, yPct: 0, value: 0, unit: '' };
+  expHover: { active: boolean; x: number; yPct: number; value: number; unit: string } =
+    { active: false, x: 0, yPct: 0, value: 0, unit: '' };
+
+  onMiniHover(event: MouseEvent, chart: ChartType, data: number[]) {
+    if (!data.length) return;
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const relX = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const n   = data.length;
+    const idx = Math.round(relX * (n - 1));
+    const val = data[idx];
+    const x   = n > 1 ? (idx / (n - 1)) * 100 : 50;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const ySvg = max === min ? 35 : 35 - ((val - min) / (max - min)) * 30;
+    this.miniHover = {
+      chart, x,
+      yPct:  (ySvg / 40) * 100,
+      value: val,
+      unit:  chart === 'temperature' ? '°C' : '%',
+    };
+  }
+
+  clearMiniHover() { this.miniHover = { ...this.miniHover, chart: null }; }
+
+  onExpHover(event: MouseEvent) {
+    const data = this.expandedChartPoints;
+    if (!data.length) return;
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const relX = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const n   = data.length;
+    const idx = Math.round(relX * (n - 1));
+    const val = data[idx];
+    const x   = n > 1 ? (idx / (n - 1)) * 100 : 50;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const ySvg = max === min ? 80 : 80 - ((val - min) / (max - min)) * 65;
+    this.expHover = {
+      active: true, x,
+      yPct:  (ySvg / 90) * 100,
+      value: val,
+      unit:  this.expandedChartUnit(),
+    };
+  }
+
+  clearExpHover() { this.expHover = { ...this.expHover, active: false }; }
+
   // ── location / sensor filter ──────────────────────────────
   selectedLocationId = 'all';
   selectedSensorId   = 'all';

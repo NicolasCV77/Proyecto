@@ -144,7 +144,146 @@
 }
 
 .page-header {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
+}
+
+/* ── Admin tabs ──────────────────────────────────────────── */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #334155;
+  margin-bottom: 24px;
+}
+
+.admin-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.admin-tab:hover { color: #cbd5e1; }
+
+.admin-tab.active {
+  color: #14b8a6;
+  border-bottom-color: #14b8a6;
+}
+
+/* ── Users panel ─────────────────────────────────────────── */
+.users-panel {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.users-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #334155;
+}
+
+.users-count {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.users-empty {
+  padding: 40px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.users-table-wrapper {
+  overflow-x: auto;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.users-table thead tr {
+  background: #0f172a;
+}
+
+.users-table th {
+  padding: 10px 16px;
+  text-align: left;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.users-table tbody tr {
+  border-top: 1px solid #1e293b;
+  transition: background 0.1s;
+}
+
+.users-table tbody tr:nth-child(even) { background: #1a2540; }
+.users-table tbody tr:hover           { background: #263352; }
+
+.users-table td {
+  padding: 11px 16px;
+  color: #cbd5e1;
+  vertical-align: middle;
+}
+
+.user-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  color: #e2e8f0 !important;
+  white-space: nowrap;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0d9488;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-email-cell {
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  color: #94a3b8 !important;
+}
+
+.user-rol-badge {
+  background: #0f2d28;
+  color: #34d399;
+  border: 1px solid #065f46;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .admin-badge {
@@ -483,7 +622,7 @@ td { padding: 4px 10px; }
 .btn-group-test {
   display: flex;
   align-items: center;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid #0d9488;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -494,7 +633,7 @@ td { padding: 4px 10px; }
 }
 
 .btn-group-test .btn-action:first-child {
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid rgba(13, 148, 136, 0.35);
 }
 
 .btn-action {
@@ -525,13 +664,13 @@ td { padding: 4px 10px; }
 }
 
 .btn-action-ghost {
-  background: #f8fafc;
-  color: #475569;
+  background: transparent;
+  color: #0d9488;
 }
 
 .btn-action-ghost:hover:not(:disabled) {
-  background: #f0fdf4;
-  color: #15803d;
+  background: #f0fdfa;
+  color: #0f766e;
 }
 
 .btn-action-ghost:disabled {
@@ -540,8 +679,8 @@ td { padding: 4px 10px; }
 }
 
 .btn-action-danger {
-  background: #f8fafc;
-  color: #94a3b8;
+  background: transparent;
+  color: #64748b;
   padding: 8px 10px;
 }
 
@@ -553,6 +692,20 @@ td { padding: 4px 10px; }
 .btn-action-danger:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* Recargar button inside dark users-panel needs dark-theme overrides */
+.users-panel .btn-action-ghost {
+  background: #0f172a;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 6px;
+}
+
+.users-panel .btn-action-ghost:hover:not(:disabled) {
+  background: #1e3a5f;
+  color: #e2e8f0;
+  border-color: #475569;
 }
 
 /* ── Test action feedback ────────────────────────────────────── */

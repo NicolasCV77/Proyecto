@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -40,7 +40,7 @@ export class ReportsComponent implements OnInit {
   filterError  = '';
   exportFormat: 'excel' | 'pdf' | 'csv' = 'excel';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.fetchDynamicData();
@@ -102,41 +102,48 @@ export class ReportsComponent implements OnInit {
     this.isGenerating = true;
 
     setTimeout(() => {
-      let filteredData = this.dashboardData.readings;
+      try {
+        let filteredData = this.dashboardData.readings;
 
-      if (this.selectedType !== 'Todas las variables') {
-        filteredData = filteredData.filter((r: any) => r.type === this.selectedType);
+        if (this.selectedType !== 'Todas las variables') {
+          filteredData = filteredData.filter((r: any) => r.type === this.selectedType);
+        }
+
+        if (this.startDate && this.endDate) {
+          const startMs = new Date(`${this.startDate}T00:00:00`).getTime();
+          const endMs   = new Date(`${this.endDate}T23:59:59`).getTime();
+
+          filteredData = filteredData.filter((r: any) => {
+            const iso = r.isoDate || null;
+            if (!iso) return false;
+            const ms = new Date(iso).getTime();
+            if (isNaN(ms)) return false;
+            return ms >= startMs && ms <= endMs;
+          });
+        }
+
+        this.isGenerating = false;
+
+        if (filteredData.length === 0) {
+          this.filterError = this.startDate && this.endDate
+            ? `Sin datos para el período ${this.startDate}${this.startDate === this.endDate ? '' : ' – ' + this.endDate}. Prueba un rango más amplio.`
+            : 'Sin datos para los filtros seleccionados.';
+          this.cdr.detectChanges();
+          return;
+        }
+
+        if (this.exportFormat === 'pdf') {
+          this.exportToPDF(filteredData, 'Reporte_Personalizado');
+        } else if (this.exportFormat === 'csv') {
+          this.exportToCSV(filteredData, 'Reporte_Personalizado');
+        } else {
+          this.exportToExcel(filteredData, 'Reporte_Personalizado');
+        }
+      } catch (e: any) {
+        this.isGenerating = false;
+        this.filterError  = `Error al generar el reporte: ${e?.message || 'Error desconocido'}. Intenta de nuevo.`;
       }
-
-      if (this.startDate && this.endDate) {
-        const startMs = new Date(`${this.startDate}T00:00:00`).getTime();
-        const endMs   = new Date(`${this.endDate}T23:59:59`).getTime();
-
-        filteredData = filteredData.filter((r: any) => {
-          // Prefer isoDate (added by backend v2) for accurate date filtering
-          const iso = r.isoDate || r.timestamp;
-          const ms  = new Date(iso).getTime();
-          if (isNaN(ms)) return false;
-          return ms >= startMs && ms <= endMs;
-        });
-      }
-
-      this.isGenerating = false;
-
-      if (filteredData.length === 0) {
-        this.filterError = this.startDate
-          ? `Sin datos entre ${this.startDate} y ${this.endDate} para los filtros seleccionados.`
-          : 'Sin datos para los filtros seleccionados.';
-        return;
-      }
-
-      if (this.exportFormat === 'pdf') {
-        this.exportToPDF(filteredData, 'Reporte_Personalizado');
-      } else if (this.exportFormat === 'csv') {
-        this.exportToCSV(filteredData, 'Reporte_Personalizado');
-      } else {
-        this.exportToExcel(filteredData, 'Reporte_Personalizado');
-      }
+      this.cdr.detectChanges();
     }, 800);
   }
 

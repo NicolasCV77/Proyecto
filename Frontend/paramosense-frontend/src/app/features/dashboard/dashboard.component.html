@@ -204,7 +204,9 @@
               <div class="mini-y-axis">
                 <span *ngFor="let l of yLabels(derivedWaterHistory)">{{ l }}</span>
               </div>
-              <div class="mini-chart-area">
+              <div class="mini-chart-area chart-hover-zone"
+                   (mousemove)="onMiniHover($event, 'water', derivedWaterHistory)"
+                   (mouseleave)="clearMiniHover()">
                 <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="gradWater" x1="0" y1="0" x2="0" y2="1">
@@ -215,6 +217,11 @@
                   <path [attr.d]="waterChartArea" fill="url(#gradWater)" stroke="none"/>
                   <path [attr.d]="waterChartPath" fill="none" stroke="#2563eb" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
                 </svg>
+                <ng-container *ngIf="miniHover.chart === 'water'">
+                  <div class="hover-vline" [style.left.%]="miniHover.x"></div>
+                  <div class="hover-dot hover-dot-blue" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct"></div>
+                  <div class="hover-tooltip" [class.flip]="miniHover.x > 75" [class.flip-y]="miniHover.yPct < 35" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct">{{ miniHover.value }}&thinsp;{{ miniHover.unit }}</div>
+                </ng-container>
               </div>
             </div>
           </ng-container>
@@ -242,7 +249,9 @@
               <div class="mini-y-axis">
                 <span *ngFor="let l of yLabels(derivedTempHistory)">{{ l }}</span>
               </div>
-              <div class="mini-chart-area">
+              <div class="mini-chart-area chart-hover-zone"
+                   (mousemove)="onMiniHover($event, 'temperature', derivedTempHistory)"
+                   (mouseleave)="clearMiniHover()">
                 <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="gradTemp" x1="0" y1="0" x2="0" y2="1">
@@ -253,6 +262,11 @@
                   <path [attr.d]="temperatureChartArea" fill="url(#gradTemp)" stroke="none"/>
                   <path [attr.d]="temperatureChartPath" fill="none" stroke="#ef4444" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
                 </svg>
+                <ng-container *ngIf="miniHover.chart === 'temperature'">
+                  <div class="hover-vline" [style.left.%]="miniHover.x"></div>
+                  <div class="hover-dot hover-dot-red" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct"></div>
+                  <div class="hover-tooltip" [class.flip]="miniHover.x > 75" [class.flip-y]="miniHover.yPct < 35" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct">{{ miniHover.value }}&thinsp;{{ miniHover.unit }}</div>
+                </ng-container>
               </div>
             </div>
           </ng-container>
@@ -280,7 +294,9 @@
               <div class="mini-y-axis">
                 <span *ngFor="let l of yLabels(derivedHumHistory)">{{ l }}</span>
               </div>
-              <div class="mini-chart-area">
+              <div class="mini-chart-area chart-hover-zone"
+                   (mousemove)="onMiniHover($event, 'humidity', derivedHumHistory)"
+                   (mouseleave)="clearMiniHover()">
                 <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="gradHum" x1="0" y1="0" x2="0" y2="1">
@@ -291,6 +307,11 @@
                   <path [attr.d]="humidityChartArea" fill="url(#gradHum)" stroke="none"/>
                   <path [attr.d]="humidityChartPath" fill="none" stroke="#0d9488" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
                 </svg>
+                <ng-container *ngIf="miniHover.chart === 'humidity'">
+                  <div class="hover-vline" [style.left.%]="miniHover.x"></div>
+                  <div class="hover-dot hover-dot-teal" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct"></div>
+                  <div class="hover-tooltip" [class.flip]="miniHover.x > 75" [class.flip-y]="miniHover.yPct < 35" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct">{{ miniHover.value }}&thinsp;{{ miniHover.unit }}</div>
+                </ng-container>
               </div>
             </div>
           </ng-container>
@@ -317,7 +338,9 @@
             <div class="mini-y-axis">
               <span *ngFor="let l of yLabels(derivedSoilHistory)">{{ l }}</span>
             </div>
-            <div class="mini-chart-area">
+            <div class="mini-chart-area chart-hover-zone"
+                 (mousemove)="onMiniHover($event, 'soil', derivedSoilHistory)"
+                 (mouseleave)="clearMiniHover()">
               <svg class="mini-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="gradSoil" x1="0" y1="0" x2="0" y2="1">
@@ -328,6 +351,11 @@
                 <path [attr.d]="soilChartArea" fill="url(#gradSoil)" stroke="none"/>
                 <path [attr.d]="soilChartPath" fill="none" stroke="#d97706" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
               </svg>
+              <ng-container *ngIf="miniHover.chart === 'soil'">
+                <div class="hover-vline" [style.left.%]="miniHover.x"></div>
+                <div class="hover-dot hover-dot-yellow" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct"></div>
+                <div class="hover-tooltip" [class.flip]="miniHover.x > 75" [class.flip-y]="miniHover.yPct < 35" [style.left.%]="miniHover.x" [style.top.%]="miniHover.yPct">{{ miniHover.value }}&thinsp;{{ miniHover.unit }}</div>
+              </ng-container>
             </div>
           </div>
         </div>
@@ -411,16 +439,25 @@
           <span *ngFor="let l of expandedYLabels">{{ l }}</span>
         </div>
         <div class="exp-chart-wrap">
-          <svg class="exp-svg" viewBox="0 0 100 90" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="gradExp" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" [attr.stop-color]="expandedChartColor()" stop-opacity="0.3"/>
-                <stop offset="100%" [attr.stop-color]="expandedChartColor()" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <path [attr.d]="expandedChartArea" fill="url(#gradExp)" stroke="none"/>
-            <path [attr.d]="expandedChartPath" fill="none" [attr.stroke]="expandedChartColor()" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
-          </svg>
+          <div class="exp-svg-zone chart-hover-zone"
+               (mousemove)="onExpHover($event)"
+               (mouseleave)="clearExpHover()">
+            <svg class="exp-svg" viewBox="0 0 100 90" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="gradExp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" [attr.stop-color]="expandedChartColor()" stop-opacity="0.3"/>
+                  <stop offset="100%" [attr.stop-color]="expandedChartColor()" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path [attr.d]="expandedChartArea" fill="url(#gradExp)" stroke="none"/>
+              <path [attr.d]="expandedChartPath" fill="none" [attr.stroke]="expandedChartColor()" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+            </svg>
+            <ng-container *ngIf="expHover.active">
+              <div class="hover-vline" [style.left.%]="expHover.x"></div>
+              <div class="hover-dot hover-dot-exp" [style.left.%]="expHover.x" [style.top.%]="expHover.yPct" [style.background]="expandedChartColor()" [style.box-shadow]="'0 0 0 3px ' + expandedChartColor() + '44'"></div>
+              <div class="hover-tooltip exp-hover-tooltip" [class.flip]="expHover.x > 75" [class.flip-y]="expHover.yPct < 25" [style.left.%]="expHover.x" [style.top.%]="expHover.yPct">{{ expHover.value }}&thinsp;{{ expHover.unit }}</div>
+            </ng-container>
+          </div>
           <div class="exp-x-labels">
             <span *ngFor="let lbl of expandedXLabels">{{ lbl }}</span>
           </div>

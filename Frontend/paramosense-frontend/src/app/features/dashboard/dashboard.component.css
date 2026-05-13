@@ -512,6 +512,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  position: relative;
 }
 
 .mini-svg {
@@ -1135,9 +1136,17 @@
   min-width: 0;
 }
 
-.exp-svg {
+.exp-svg-zone {
   flex: 1;
+  position: relative;
+  overflow: visible;
+  min-height: 0;
+}
+
+.exp-svg {
   width: 100%;
+  height: 100%;
+  display: block;
   border-bottom: 1px solid var(--border);
   border-left: 1px solid var(--border);
 }
@@ -1221,4 +1230,76 @@
   .side-panel  { width: 100%; max-width: 100%; }
   .table-card  { padding: 16px; }
   .section-title { font-size: 14px; }
+}
+
+/* ── Chart hover tooltip ───────────────────────────────────── */
+
+.chart-hover-zone {
+  position: relative;
+  cursor: crosshair;
+  overflow: visible;
+}
+
+.hover-vline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.hover-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+  transition: none;
+}
+
+.hover-dot-blue   { background: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.4); }
+.hover-dot-red    { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.4); }
+.hover-dot-teal   { background: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.4); }
+.hover-dot-yellow { background: #d97706; box-shadow: 0 0 0 3px rgba(217,119,6,0.4); }
+.hover-dot-exp    { box-shadow: 0 0 0 3px rgba(255,255,255,0.15); }
+
+.hover-tooltip {
+  position: absolute;
+  /* anchored to dot position via [style.top.%] in template */
+  transform: translate(-50%, calc(-100% - 10px));  /* default: above dot */
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 20;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+}
+
+.hover-tooltip.flip {
+  transform: translate(-90%, calc(-100% - 10px));
+}
+
+.hover-tooltip.flip-y {
+  transform: translate(-50%, 10px);   /* below dot when dot is near top */
+}
+
+.hover-tooltip.flip.flip-y {
+  transform: translate(-90%, 10px);
+}
+
+.exp-hover-tooltip {
+  font-size: 12px;
+  padding: 4px 10px;
 }

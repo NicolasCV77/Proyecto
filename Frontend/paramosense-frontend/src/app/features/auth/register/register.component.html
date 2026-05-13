@@ -91,8 +91,9 @@
             <label class="field-label">Correo electrónico</label>
             <div class="input-wrapper">
               <input type="email" [(ngModel)]="formData.email" name="email"
-                     class="input-field" [class.field-error]="fieldHasError('email')"
-                     placeholder="Ingresa tu correo electrónico"/>
+                     class="input-field" [class.field-error]="fieldHasError('email') || emailTakenError"
+                     placeholder="Ingresa tu correo electrónico"
+                     (ngModelChange)="emailTakenError = false"/>
             </div>
           </div>
         </div>

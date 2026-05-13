@@ -28,19 +28,30 @@ BROKER = "broker.hivemq.com"
 PORT   = 1883
 TOPIC  = "paramosense/data"
 
-# ─── Rangos de datos ───────────────────────────────────────────────────────────
-NORMAL = {
-    "temperature": (6.0,  15.0),
+# ─── Rangos de datos (alineados con categorías de clima del dashboard) ────────
+#   Óptimo:     temp 5-15 °C | hum >70% | agua 60-95% | suelo >60%
+#   Intermedio: temp 15-20 °C ó 3-5 °C | hum 40-70% | agua 40-60% | suelo 30-60%
+#   Crítico:    temp >20 °C ó <3 °C | hum <40% | agua <40% ó >90% | suelo <30%
+OPTIMO = {
+    "temperature": (5.0,  15.0),
     "humidity":    (70.0, 90.0),
-    "water":       (45.0, 85.0),
-    "soil":        (50.0, 80.0),
+    "water":       (60.0, 95.0),
+    "soil":        (60.0, 80.0),
 }
-CRITICAL = {
+INTERMEDIO = {
+    "temperature": [(15.1, 19.9), (3.1, 4.9)],
+    "humidity":    [(40.0, 69.9)],
+    "water":       [(40.0, 59.9)],
+    "soil":        [(30.0, 59.9)],
+}
+CRITICO = {
     "temperature": [(0.0, 2.5), (22.0, 30.0)],
     "humidity":    [(15.0, 38.0)],
     "water":       [(5.0, 35.0), (92.0, 99.0)],
     "soil":        [(5.0, 25.0)],
 }
+
+MODES_ORDER = ["optimo", "intermedio", "critico"]
 
 # ─── Colores ───────────────────────────────────────────────────────────────────
 C_BG      = "#0f172a"
@@ -56,25 +67,24 @@ C_OK      = "#22c55e"
 C_BTN_DEL = "#7f1d1d"
 
 
-def rand_normal(key):
-    lo, hi = NORMAL[key]
-    return round(random.uniform(lo, hi), 1)
-
-
-def rand_critical(key):
-    ranges = CRITICAL[key]
-    lo, hi = random.choice(ranges)
+def _rand_single(spec, key):
+    """spec puede ser (lo, hi) o [(lo, hi), ...]"""
+    val = spec[key]
+    if isinstance(val[0], (int, float)):
+        lo, hi = val
+    else:
+        lo, hi = random.choice(val)
     return round(random.uniform(lo, hi), 1)
 
 
 def make_payload(node_id, mode):
-    fn = rand_critical if mode == "critical" else rand_normal
+    spec = {"optimo": OPTIMO, "intermedio": INTERMEDIO}.get(mode, CRITICO)
     return {
         "nodeId":      node_id,
-        "temperature": fn("temperature"),
-        "humidity":    fn("humidity"),
-        "water":       fn("water"),
-        "soil":        fn("soil"),
+        "temperature": _rand_single(spec, "temperature"),
+        "humidity":    _rand_single(spec, "humidity"),
+        "water":       _rand_single(spec, "water"),
+        "soil":        _rand_single(spec, "soil"),
     }
 
 
@@ -135,7 +145,7 @@ class MQTTManager:
 class VirtualSensor:
     def __init__(self, node_id, mqtt_mgr, on_log, on_status_change):
         self.node_id          = node_id
-        self.mode             = "normal"
+        self.mode             = "optimo"
         self.interval         = 5
         self.running          = False
         self._mqtt            = mqtt_mgr
@@ -329,10 +339,12 @@ class SimuladorApp(tk.Tk):
         else:
             row["btn_toggle"].configure(text="▶ Iniciar", fg=C_OK)
 
-        if s.mode == "critical":
-            row["btn_mode"].configure(text="⚠ Crítico", fg=C_CRIT, bg="#450a0a")
+        if s.mode == "critico":
+            row["btn_mode"].configure(text="⚠ Crítico",     fg=C_CRIT, bg="#450a0a")
+        elif s.mode == "intermedio":
+            row["btn_mode"].configure(text="⚡ Intermedio",  fg=C_WARN, bg="#3d2a00")
         else:
-            row["btn_mode"].configure(text="✓ Normal",  fg=C_OK,   bg="#052e16")
+            row["btn_mode"].configure(text="✓ Óptimo",       fg=C_OK,   bg="#052e16")
 
     # ── gestión sensores ────────────────────────────────────────────────────────
     def _next_id(self):
@@ -362,7 +374,7 @@ class SimuladorApp(tk.Tk):
                  font=("Consolas", 9, "bold"), width=8).pack(side="left")
 
         # botón modo
-        btn_mode = tk.Button(inner, text="✓ Normal", bg="#052e16", fg=C_OK,
+        btn_mode = tk.Button(inner, text="✓ Óptimo", bg="#052e16", fg=C_OK,
                              font=("Segoe UI", 8), relief="flat", cursor="hand2",
                              padx=6, pady=2)
         btn_mode.pack(side="left", padx=4)
@@ -422,10 +434,12 @@ class SimuladorApp(tk.Tk):
         s = self._sensors.get(node_id)
         if not s:
             return
-        new_mode = "critical" if s.mode == "normal" else "normal"
+        idx      = MODES_ORDER.index(s.mode) if s.mode in MODES_ORDER else 0
+        new_mode = MODES_ORDER[(idx + 1) % len(MODES_ORDER)]
         s.set_mode(new_mode)
-        label = "crítico" if new_mode == "critical" else "normal"
-        self._log(f"[SIM] {node_id} → modo {label}", "warn" if new_mode == "critical" else "info")
+        labels = {"optimo": "óptimo", "intermedio": "intermedio", "critico": "crítico"}
+        tags   = {"optimo": "info",   "intermedio": "warn",       "critico": "error"}
+        self._log(f"[SIM] {node_id} → modo {labels[new_mode]}", tags[new_mode])
 
     def _change_interval(self, node_id):
         s   = self._sensors.get(node_id)

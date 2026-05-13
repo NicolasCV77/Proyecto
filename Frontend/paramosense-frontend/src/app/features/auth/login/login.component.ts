@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +23,11 @@ export class LoginComponent implements OnDestroy {
   private logoClickCount = 0;
   private logoClickTimer: any = null;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnDestroy() {
     if (this.logoClickTimer) clearTimeout(this.logoClickTimer);
@@ -66,8 +70,22 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading    = false;
-        this.errorMessage = err.error?.message || 'Error al conectar con el servidor. ¿Está el backend corriendo?';
+        this.errorMessage = this.mapLoginError(err);
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  private mapLoginError(err: any): string {
+    if (err.status === 0) {
+      return 'No se pudo conectar al servidor. Verifica que el backend esté corriendo.';
+    }
+    if (err.status === 400 || err.status === 401) {
+      return 'Correo o contraseña incorrectos. Verifica tus datos.';
+    }
+    if (err.status >= 500) {
+      return 'Error interno del servidor. Intenta de nuevo en un momento.';
+    }
+    return err.error?.message || 'Error inesperado. Intenta de nuevo.';
   }
 }

@@ -541,6 +541,17 @@ app.get('/api/locations', async (req, res) => {
     }
 });
 
+// ── Admin — usuarios registrados ─────────────────────────────────────────────
+
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const users = await User.find({}).select('-password').lean();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ── Admin — editar ubicaciones ────────────────────────────────────────────────
 
 app.put('/api/admin/locations/:locationId', async (req, res) => {

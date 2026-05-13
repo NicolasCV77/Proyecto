@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -32,6 +32,7 @@ export class RegisterComponent {
   stage: 'idle' | 'registering' | 'logging-in' = 'idle';
   errorMessage:   string | null = null;
   successMessage: string | null = null;
+  emailTakenError = false;
 
   private readonly NAME_RE  = /^[a-zA-ZÀ-ÿ\s]+$/;
   private readonly EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -78,12 +79,17 @@ export class RegisterComponent {
     }
   }
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   onRegister() {
-    this.submitted      = true;
-    this.errorMessage   = null;
-    this.successMessage = null;
+    this.submitted       = true;
+    this.errorMessage    = null;
+    this.successMessage  = null;
+    this.emailTakenError = false;
 
     const nombre   = this.formData.nombre.trim();
     const apellido = this.formData.apellido.trim();
@@ -167,10 +173,31 @@ export class RegisterComponent {
         });
       },
       error: (err) => {
-        this.isLoading    = false;
-        this.stage        = 'idle';
-        this.errorMessage = err.error?.message || 'Error al conectar con el servidor. ¿Está el backend corriendo?';
+        this.isLoading = false;
+        this.stage     = 'idle';
+        this.errorMessage = this.mapRegisterError(err);
+        if (err.error?.message?.toLowerCase().includes('correo') &&
+            err.error?.message?.toLowerCase().includes('registrado')) {
+          this.emailTakenError = true;
+        }
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  private mapRegisterError(err: any): string {
+    if (err.status === 0) {
+      return 'No se pudo conectar al servidor. Verifica que el backend esté corriendo.';
+    }
+    if (err.status === 400 && err.error?.message) {
+      return err.error.message;
+    }
+    if (err.status === 409 && err.error?.message) {
+      return err.error.message;
+    }
+    if (err.status >= 500) {
+      return 'Error interno del servidor. Intenta de nuevo en un momento.';
+    }
+    return err.error?.message || 'Error inesperado. Intenta de nuevo.';
   }
 }
